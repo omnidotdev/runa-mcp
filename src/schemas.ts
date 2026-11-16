@@ -45,9 +45,10 @@ const priorityArg = z
   .describe("Task priority.");
 
 const dueDateArg = z
-  .string()
-  .datetime({ offset: true })
-  .describe("Due date and time as an ISO 8601 timestamp.");
+  .union([z.string().date(), z.string().datetime({ offset: true })])
+  .describe(
+    "Due date. A date (`YYYY-MM-DD`), or an ISO 8601 timestamp at exactly midnight in its stated offset, sets an all-day due date on that day. Any other ISO 8601 timestamp with an offset sets a due date and time at that instant.",
+  );
 
 export const listWorkspacesShape = {};
 
@@ -116,7 +117,9 @@ export const updateTaskShape = {
   dueDate: dueDateArg
     .nullable()
     .optional()
-    .describe("New due date as an ISO 8601 timestamp, or null to clear it."),
+    .describe(
+      "New due date: a date (`YYYY-MM-DD`) or midnight timestamp for an all-day due date, any other ISO 8601 timestamp with an offset for a due date and time, or null to clear it.",
+    ),
 };
 
 export const moveTaskShape = {

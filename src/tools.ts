@@ -28,8 +28,10 @@ import {
   isUuid,
   parseTaskKey,
   plainTextToHtml,
+  presentDueDate,
   sameName,
   taskKey,
+  toDueDateInput,
 } from "./util.ts";
 
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -220,7 +222,7 @@ const summarizeTask = (task: Task, includeDescription = false) => ({
   project: task.project?.name ?? null,
   status: task.column?.title ?? null,
   priority: task.priority,
-  dueDate: task.dueDate,
+  dueDate: presentDueDate(task.dueDate, task.dueHasTime),
   assignees: task.assignees.nodes.flatMap((assignee) =>
     assignee.user ? [assignee.user.name] : [],
   ),
@@ -284,7 +286,7 @@ export const registerTools = (
 
   server.tool(
     "list_tasks",
-    "List a project's tasks in board order, optionally narrowed to one column, a priority, or a title search. Returns each task's key, title, status, priority, due date, and assignees.",
+    "List a project's tasks in board order, optionally narrowed to one column, a priority, or a title search. Returns each task's key, title, status, priority, due date (a `YYYY-MM-DD` day when all-day, an ISO 8601 timestamp when it has a time), and assignees.",
     listTasksShape,
     ({ workspace, project, column, priority, search, limit }) =>
       guard(async () => {
@@ -310,7 +312,7 @@ export const registerTools = (
 
   server.tool(
     "get_task",
-    "Read one task: its key, title, description, project, status, priority, due date, assignees, and comments (oldest first).",
+    "Read one task: its key, title, description, project, status, priority, due date (a `YYYY-MM-DD` day when all-day, an ISO 8601 timestamp when it has a time), assignees, and comments (oldest first).",
     getTaskShape,
     ({ workspace, task }) =>
       guard(async () => {
@@ -355,7 +357,7 @@ export const registerTools = (
             content: plainTextToHtml(title),
             description: description ? plainTextToHtml(description) : "",
             priority: priority ?? "medium",
-            dueDate: dueDate ?? null,
+            ...toDueDateInput(dueDate ?? null),
             authorId: author.rowId,
           },
         });
@@ -376,7 +378,8 @@ export const registerTools = (
           patch.description = plainTextToHtml(description);
         }
         if (priority !== undefined) patch.priority = priority;
-        if (dueDate !== undefined) patch.dueDate = dueDate;
+        if (dueDate !== undefined)
+          Object.assign(patch, toDueDateInput(dueDate));
         if (!Object.keys(patch).length) return fail("Nothing to update.");
 
         const client = await clients.clientFor(workspace);

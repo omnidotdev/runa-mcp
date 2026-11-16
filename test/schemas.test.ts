@@ -32,6 +32,28 @@ describe("createTaskSchema", () => {
   });
 });
 
+describe("dueDate argument", () => {
+  test("accepts a bare date or a timestamp with an offset", () => {
+    const base = { project: "APP", title: "Fix" };
+    for (const dueDate of [
+      "2026-12-01",
+      "2026-12-01T00:00:00+01:00",
+      "2026-12-01T15:00:00-06:00",
+    ]) {
+      expect(createTaskSchema.safeParse({ ...base, dueDate }).success).toBe(
+        true,
+      );
+    }
+    expect(
+      createTaskSchema.safeParse({ ...base, dueDate: "2026-12-01T15:00:00" })
+        .success,
+    ).toBe(false);
+    expect(
+      createTaskSchema.safeParse({ ...base, dueDate: "2026-13-01" }).success,
+    ).toBe(false);
+  });
+});
+
 describe("updateTaskSchema", () => {
   test("allows null to clear the due date", () => {
     expect(

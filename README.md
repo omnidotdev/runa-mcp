@@ -27,7 +27,7 @@ or id); see [Workspaces](#workspaces). Tools take human identifiers:
 | `list_tasks` | read | A project's tasks in board order, optionally by `column`, `priority`, or title `search` (`limit` 1 to 100, default 50) |
 | `get_task` | read | One task with its description and comments |
 | `create_task` | **write** | Create a task at the end of a column (the project's first column by default) |
-| `update_task` | **write** | Change a task's title, description, priority, or due date (`dueDate: null` clears it) |
+| `update_task` | **write** | Change a task's title, description, priority, or due date (`dueDate: null` clears it; a `YYYY-MM-DD` date or a midnight timestamp sets an all-day due date, any other timestamp a due date and time) |
 | `move_task` | **write** | Move a task to another column of its project, at the end of that column |
 | `add_comment` | **write** | Comment on a task |
 
