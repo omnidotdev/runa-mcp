@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "license": "Apache-2.0",
   "description": "Model Context Protocol server for Runa: list projects, columns, and tasks, read tasks with their comments, and create, update, move, and comment on tasks through the Runa API.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/omnidotdev/runa-mcp.git"
+  },
   "type": "module",
   "bin": {
     "runa-mcp": "dist/index.js"
