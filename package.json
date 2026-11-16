@@ -1,0 +1,46 @@
+{
+  "name": "@omnidotdev/runa-mcp",
+  "version": "0.0.0",
+  "license": "Apache-2.0",
+  "description": "Model Context Protocol server for Runa: list projects, columns, and tasks, read tasks with their comments, and create, update, move, and comment on tasks through the Runa API.",
+  "type": "module",
+  "bin": {
+    "runa-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "dev": "bun run --watch src/index.ts",
+    "start:http": "bun run src/http.ts",
+    "build": "bun build src/index.ts --target node --outfile dist/index.js --banner '#!/usr/bin/env node'",
+    "check": "biome check --diagnostic-level=error src test",
+    "format": "biome format --write src test",
+    "lint": "biome lint --write src test",
+    "typecheck": "tsc --noEmit",
+    "knip": "knip-bun",
+    "test": "bun test",
+    "changeset": "changeset",
+    "release": "bun run build && changeset publish"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.1",
+    "fractional-indexing": "4.0.0",
+    "graphql": "16.11.0",
+    "graphql-request": "7.2.0",
+    "jose": "6.2.17",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.3.12",
+    "@changesets/changelog-github": "^1.0.0",
+    "@changesets/cli": "^3.0.1",
+    "@types/bun": "1.3.14",
+    "knip": "5.82.1",
+    "typescript": "5.9.3"
+  }
+}
