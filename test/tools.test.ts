@@ -57,6 +57,7 @@ const task = (overrides: Partial<Task> = {}): Task => ({
   description: "<p>Steps</p><p>to &amp; repro</p>",
   priority: "high",
   dueDate: null,
+  dueHasTime: false,
   columnId: COLUMNS[0]?.rowId ?? "",
   projectId: APP.rowId,
   column: { title: "To Do" },
@@ -76,6 +77,7 @@ const fakeClient = (
     projects?: Project[];
     taskById?: Task | null;
     tasksByNumber?: Task[];
+    listedTasks?: Task[];
     lastColumnIndex?: string | null;
     fail?: (call: Call) => Error | undefined;
   } = {},
@@ -128,7 +130,7 @@ const fakeClient = (
         };
       }
       if (document.includes("ListTasks")) {
-        return { tasks: { nodes: [task()] } };
+        return { tasks: { nodes: opts.listedTasks ?? [task()] } };
       }
       if (document.includes("CreateTask")) {
         return { createTask: { task: task({ number: 13 }) } };
@@ -373,6 +375,7 @@ describe("tools", () => {
         description: "<p>line one</p><p>line two</p>",
         priority: "medium",
         dueDate: null,
+        dueHasTime: false,
         authorId: "u-1",
       },
     });
@@ -387,8 +390,60 @@ describe("tools", () => {
     const update = calls.find((call) => call.document.includes("UpdateTask"));
     expect(update?.variables).toEqual({
       rowId: task().rowId,
-      patch: { dueDate: null },
+      patch: { dueDate: null, dueHasTime: false },
     });
+  });
+
+  test("update_task stores midnight or a bare date as all-day, else timed", async () => {
+    const cases: [string, Record<string, unknown>][] = [
+      ["2026-12-01", { dueDate: "2026-12-01T00:00:00Z", dueHasTime: false }],
+      [
+        "2026-12-01T00:00:00+01:00",
+        { dueDate: "2026-12-01T00:00:00Z", dueHasTime: false },
+      ],
+      [
+        "2026-12-01T15:00:00-06:00",
+        { dueDate: "2026-12-01T15:00:00-06:00", dueHasTime: true },
+      ],
+    ];
+    for (const [dueDate, patch] of cases) {
+      const { client, calls } = fakeClient();
+      await captureTools(client)("update_task", { task: "APP-12", dueDate });
+      const update = calls.find((call) => call.document.includes("UpdateTask"));
+      expect(update?.variables?.patch).toEqual(patch);
+    }
+  });
+
+  test("create_task sends a timed due date with dueHasTime", async () => {
+    const { client, calls } = fakeClient();
+    await captureTools(client)("create_task", {
+      project: "APP",
+      title: "Call",
+      dueDate: "2026-12-01T15:00:00Z",
+    });
+    const create = calls.find((call) => call.document.includes("CreateTask"));
+    const input = create?.variables?.task as Record<string, unknown>;
+    expect(input.dueDate).toBe("2026-12-01T15:00:00Z");
+    expect(input.dueHasTime).toBe(true);
+  });
+
+  test("list_tasks presents all-day due dates as a day and timed ones as an instant", async () => {
+    const { client } = fakeClient({
+      listedTasks: [
+        // legacy all-day row stored at a UTC+1 local midnight
+        task({ dueDate: "2026-11-30T23:00:00+00:00", dueHasTime: false }),
+        task({ dueDate: "2026-12-01T00:00:00+00:00", dueHasTime: false }),
+        task({ dueDate: "2026-12-01T21:00:00+00:00", dueHasTime: true }),
+      ],
+    });
+    const tasks = json(
+      await captureTools(client)("list_tasks", { project: "APP" }),
+    );
+    expect(tasks.map((entry: { dueDate: string }) => entry.dueDate)).toEqual([
+      "2026-12-01",
+      "2026-12-01",
+      "2026-12-01T21:00:00+00:00",
+    ]);
   });
 
   test("move_task places the task at the end of the resolved column", async () => {

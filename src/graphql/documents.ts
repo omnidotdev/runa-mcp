@@ -60,6 +60,7 @@ const TASK_FIELDS = /* GraphQL */ `
   description
   priority
   dueDate
+  dueHasTime
   columnId
   projectId
   column {

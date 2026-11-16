@@ -32,6 +32,8 @@ export interface Task {
   description: string;
   priority: string | null;
   dueDate: string | null;
+  /** False for an all-day due date (or none), true when it has a time */
+  dueHasTime: boolean;
   columnId: string;
   projectId: string;
   column: { title: string } | null;
